@@ -46,22 +46,3 @@ function subDivideFunct(numParts, points, oldCenter) =
           [points] :
           [for (iii = [0:(numParts - 1)])
               subDividePointsBetween(center, intersections, points, iii) ];
-
-
-module subDivideHelp(level, color, maxDepth, boundaryPoints, oldCenter) {
-    echo("subDivideHelp", level, color, maxDepth, boundaryPoints, oldCenter);
-    if (level <= maxDepth) {
-        drawPoly(level, color, boundaryPoints, oldCenter);
-        numParts = ((level % 2) == 0) ? 3 : 4;
-        center = centroid(boundaryPoints);
-        subDivisions = subDivideFunct(numParts, boundaryPoints, oldCenter);
-        echo("subDivisions", subDivisions);
-        //for (iii = [0 : numParts - 1])
-        //    subDivideHelp(level + 1, COLORS[(iii + level)  % len(COLORS)], maxDepth, subDivisions[iii], center);
-        subDivideHelp(level + 1, COLORS[level % len(COLORS)], maxDepth, subDivisions[0], center);
-    }
-}
-
-module subDivide(maxDepth, boundaryPoints, oldCenter) {
-    subDivideHelp(1, "gold", maxDepth, boundaryPoints, oldCenter);
-}
