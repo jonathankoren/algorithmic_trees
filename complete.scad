@@ -65,7 +65,16 @@ TARGET_PLANE_LENGTH = 100;
 TARGET_PLANE_WIDTH = 100;
 
 // Target plane  height (Z direction)
-TARGET_PLANE_HEIGHT = 30;
+TARGET_PLANE_HEIGHT = 100;
+
+// Show terminal nodes
+DEBUG_SHOW_TERMINAL_NODES = true;
+
+// Show target locations
+DEBUG_SHOW_TARGET_LOCATIONS = true;
+
+// Show tree (You will want this on)
+DEBUG_SHOW_TREE = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,6 +275,8 @@ function numSplits(nodeId, endPoint, targetPoint, recursionTTL, seq) =
 //function numSplits(nodeId, endPoint, targetPoint, recursionTTL, seq) = 
 //    ((recursionTTL >= 4) && (recursionTTL % 2 == 0)) ? 2 : 1;
 function numSplits(nodeId, endPoint, targetPoint, recursionTTL, seq) = 
+    (recursionTTL == 8) ? 
+        4 :
     (recursionTTL == 6) ? 
         4 :
         (recursionTTL == 4) ? 
@@ -287,60 +298,71 @@ function calculateNewTargetPlanes3D(numOfSplits, targetPlanePoints) =
 module branch(nodeId, srcPoint, targetPlane3D, startRadius, startYangle, startZangle, recursionTTL, oldNodeId) {
     kolor = COLORS[recursionTTL % len(COLORS)];
     targetPoint = centroid(targetPlane3D);
-    echo(nodeId, "oldNodeId", oldNodeId);
-    echo(nodeId, kolor, recursionTTL);
-    echo(nodeId, "srcPoint", srcPoint);
-    echo(nodeId, "targetPlane3D", targetPlane3D);
-    echo(nodeId, "targetPoint", targetPoint);
+//    echo(nodeId, "oldNodeId", oldNodeId);
+//    echo(nodeId, kolor, recursionTTL);
+//    echo(nodeId, "srcPoint", srcPoint);
+//    echo(nodeId, "targetPlane3D", targetPlane3D);
+//    echo(nodeId, "targetPoint", targetPoint);
     endRadius = calcSegmentEndRadius(nodeId, srcPoint, targetPoint, startRadius, recursionTTL, 0);
-    echo(nodeId, "distance", euclidDistance(srcPoint, targetPoint));
+//    echo(nodeId, "distance", euclidDistance(srcPoint, targetPoint));
     length = calcSegmentLength(nodeId, srcPoint, targetPoint, recursionTTL, 1);
-    echo(nodeId, "length", length);
+//    echo(nodeId, "length", length);
     
-    echo(nodeId, "startYangle", startYangle);
+//    echo(nodeId, "startYangle", startYangle);
     yangleTarget = calcSegmentTargetYangle(srcPoint, targetPoint);
-    echo(nodeId, "yangleTarget", yangleTarget);
+//    echo(nodeId, "yangleTarget", yangleTarget);
     
     yangle = calcSegmentYangle(nodeId, srcPoint, targetPoint, startYangle, recursionTTL, 2);
-    echo(nodeId, "yangle", yangle);
+//    echo(nodeId, "yangle", yangle);
     zangle = calcSegmentZangle(nodeId, srcPoint, targetPoint, startZangle, recursionTTL, 3);
-    echo(nodeId, "zangle", zangle);
+//    echo(nodeId, "zangle", zangle);
     
     mrot = makeRotationMatrix(yangle, zangle, srcPoint);
     endPoint = addVects(calcSegmentEndPoint(mrot, length), srcPoint);
-    echo(nodeId, "mrot", mrot);
-    echo(nodeId, "endPoint", endPoint);
+//    echo(nodeId, "mrot", mrot);
+//    echo(nodeId, "endPoint", endPoint);
 
     debugColor = ((srcPoint[0] < targetPoint[0]) && (srcPoint[1] < targetPoint[1])) ? "black" :
                  ((srcPoint[0] > targetPoint[0]) && (srcPoint[1] < targetPoint[1])) ? "red" :
                  ((srcPoint[0] > targetPoint[0]) && (srcPoint[1] > targetPoint[1])) ? "blue" :
                  ((srcPoint[0] < targetPoint[0]) && (srcPoint[1] > targetPoint[1])) ? "green" :
                  "pink";
-    echo(nodeId, "debugColor", debugColor, srcPoint, targetPoint);
+//    echo(nodeId, "debugColor", debugColor, srcPoint, targetPoint);
     
-    
-    multmatrix(mrot)
-    color(debugColor)
-    drawSegment(length, startRadius, endRadius);
+
+    if (DEBUG_SHOW_TREE) {
+        multmatrix(mrot)
+        color(debugColor)
+        drawSegment(length, startRadius, endRadius);
+    }
     
     if (!branchRecursionStop(nodeId, endPoint, targetPoint, recursionTTL, 4)) {
         numOfSplits = numSplits(nodeId, endPoint, targetPoint, recursionTTL, 5);
-        echo(nodeId, "numOfSplits", numOfSplits); 
-        //newTargetPlanes3D = [targetPlane3D, targetPlane3D, targetPlane3D, targetPlane3D];
+//        echo(nodeId, "numOfSplits", numOfSplits); 
         newTargetPlanes3D = calculateNewTargetPlanes3D(numOfSplits, targetPlane3D);
-        echo(nodeId, "newTargetPlanes3D", newTargetPlanes3D);
+//        echo(nodeId, "newTargetPlanes3D", newTargetPlanes3D);
+
+        if ((numOfSplits > 1) && DEBUG_SHOW_TARGET_LOCATIONS) {
+            for (i = [0:len(newTargetPlanes3D)-1]) {
+                translate(centroid(newTargetPlanes3D[i]))
+                color(COLORS[recursionTTL  % len(COLORS)])
+                sphere(1);
+            }
+            echo(nodeId, "targets are", COLORS[recursionTTL % len(COLORS)]);
+        }
 
         for (i = [1:numOfSplits]) {
             newNodeId = (nodeId * pow(10, i - 1)) + 1;
-            echo("NEW", newNodeId, "<-", nodeId, i, newTargetPlanes3D[i - 1]);            
+//            echo("NEW", newNodeId, "<-", nodeId, i, newTargetPlanes3D[i - 1]);            
             branch(newNodeId, endPoint, newTargetPlanes3D[i - 1], endRadius, yangle, zangle, recursionTTL - 1, nodeId);
-            //branch(newNodeId, endPoint, targetPlane3D, endRadius, yangle, zangle, recursionTTL - 1, nodeId);
         }
 
     } 
     else { 
-        echo(nodeId, "!!!!!", (recursionTTL < 1)? "EXHAUSTED" : "STOP", "!!!!!");
-        translate(endPoint) color((recursionTTL < 1)? kolor : "black") cube([3*startRadius, 3*startRadius, 3*startRadius], true);
+//        echo(nodeId, "!!!!!", (recursionTTL < 1)? "EXHAUSTED" : "STOP", "!!!!!");
+        if (DEBUG_SHOW_TERMINAL_NODES) {
+//        translate(endPoint) color((recursionTTL < 1)? kolor : "black") cube([3*startRadius, 3*startRadius, 3*startRadius], true);
+        }
     }
 }
 
@@ -348,14 +370,14 @@ module branch(nodeId, srcPoint, targetPlane3D, startRadius, startYangle, startZa
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-COLORS = ["gold", "blue", "lime", "purple", "green", "orange", "red"];
+COLORS = ["yellow", "blue", "lime", "purple", "green", "orange", "red"];
 
 nodeId = 2;
 srcPoint = [0, 0, 0];
 startRadius = 1;
 startYangle = 0;
 startZangle = 0;
-recursionTTL = 6;
+recursionTTL = 10;
 oldCenter2D = [0, 1000];
 
 branch(nodeId, srcPoint, targetPlanePoints(), startRadius, startYangle, startZangle, recursionTTL, -1);
