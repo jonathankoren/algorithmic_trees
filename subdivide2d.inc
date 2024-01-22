@@ -1,4 +1,7 @@
 function findIntersectionHelp(center, scaledDivPoint, polygon, idx) =
+  (idx >= (2 * len(polygon))) ?
+    echo("!!!!! FAIL INTERSECT", center, scaledDivPoint, polygon, idx)
+    [0, 0] :
     (intersectHappens(center, scaledDivPoint, polygon[idx], polygon[(idx + 1) % len(polygon)])) ?
         intersection(center, scaledDivPoint, polygon[idx], polygon[(idx + 1) % len(polygon)]) :
         findIntersectionHelp(center, scaledDivPoint, polygon, idx + 1);
@@ -40,6 +43,7 @@ function subDivideFunct(numParts, points, oldCenter) =
          cp = subVects(oldCenter, center),
          divPoints = [for (i = [0:numParts-1]) addVects(rotate2D(cp, -angle * i), center)],
          scaledDivPoints = [ for (i = [0:len(divPoints)-1]) scaleVector(10, center, divPoints[i]) ],
+         z = echo("FINDING INTERSECT", numParts, center, "points", points, "divPoints", divPoints, "scaledDivPoints", scaledDivPoints),
          intersections = [ for (i = [0:len(divPoints)-1]) findIntersection(center, scaledDivPoints[i], points) ]
         )
         (numParts == 1) ?
